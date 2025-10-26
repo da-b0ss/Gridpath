@@ -66,62 +66,119 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
         height: typeof height === 'number' ? `${height}px` : height,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        backgroundColor: '#0f1420'
       }}
     >
       {/* Control Panel */}
       <div style={{
-        padding: '12px 20px',
-        backgroundColor: '#f5f5f5',
-        borderBottom: '1px solid #ddd',
+        padding: '12px 24px',
+        background: 'linear-gradient(135deg, #1a1f35 0%, #141824 100%)',
+        borderBottom: '1px solid rgba(99, 102, 241, 0.15)',
         display: 'flex',
-        gap: '12px',
+        gap: '14px',
         alignItems: 'center',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.25)',
+        flexShrink: 0
       }}>
         <button
           onClick={refreshDisplay}
           disabled={isLoading}
           style={{
             padding: '10px 20px',
-            backgroundColor: isLoading ? '#ccc' : '#4CAF50',
+            background: isLoading
+              ? 'linear-gradient(135deg, #374151 0%, #1f2937 100%)'
+              : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
             color: 'white',
             border: 'none',
-            borderRadius: '4px',
+            borderRadius: '6px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             fontSize: '14px',
-            fontWeight: '500',
-            transition: 'background-color 0.2s'
+            fontWeight: '600',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: isLoading
+              ? 'none'
+              : '0 4px 12px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}
           onMouseEnter={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = '#45a049';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
             }
           }}
           onMouseLeave={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = '#4CAF50';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
             }
           }}
         >
+          <span style={{ fontSize: '16px' }}>
+            {isLoading ? '⟳' : '↻'}
+          </span>
           {isLoading ? 'Refreshing Display...' : 'Refresh Display'}
         </button>
 
         {/* Status Messages */}
         {message && (
-          <span style={{ color: '#4CAF50', fontSize: '14px' }}>
-            ✓ {message}
-          </span>
+          <div style={{
+            padding: '6px 14px',
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '6px',
+            color: '#34d399',
+            fontSize: '13px',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            animation: 'fadeIn 0.3s ease-in'
+          }}>
+            <span style={{
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>✓</span>
+            {message}
+          </div>
         )}
         {error && (
-          <span style={{ color: '#f44336', fontSize: '14px' }}>
-            ✗ {error}
-          </span>
+          <div style={{
+            padding: '6px 14px',
+            backgroundColor: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: '6px',
+            color: '#f87171',
+            fontSize: '13px',
+            fontWeight: '500',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            animation: 'fadeIn 0.3s ease-in'
+          }}>
+            <span style={{
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>✗</span>
+            {error}
+          </div>
         )}
       </div>
 
       {/* Map Container */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{
+        flex: 1,
+        overflow: 'hidden',
+        position: 'relative',
+        backgroundColor: '#0a0e1a'
+      }}>
         <iframe
           ref={iframeRef}
           key={mapKey}
@@ -131,7 +188,8 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
             height: '100%',
             border: 'none',
             margin: 0,
-            padding: 0
+            padding: 0,
+            display: 'block'
           }}
           title="Drone Missions Map"
           sandbox="allow-scripts allow-same-origin"

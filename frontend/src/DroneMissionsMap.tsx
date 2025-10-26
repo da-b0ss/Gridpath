@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import DronePanel, { Drone } from './DronePanel';
 
 interface DroneMissionsMapProps {
   /** Optional width of the map container */
@@ -28,6 +29,13 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
   const [progress, setProgress] = useState(0);
 
   const SEARCH_TIME_LIMIT_SECONDS = 30; // Must match backend routing.py
+  const STANDARD_BATTERY_CAPACITY = 37725; // Must match backend config.py
+
+  // Drone fleet state
+  const [drones, setDrones] = useState<Drone[]>([
+    { id: 1, batteryCapacity: STANDARD_BATTERY_CAPACITY }
+  ]);
+  const [nextDroneId, setNextDroneId] = useState(2);
 
   useEffect(() => {
     // Any additional initialization logic can go here
@@ -56,17 +64,43 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
     }
   }, [isLoading]);
 
+  // Drone management functions
+  const handleAddDrone = () => {
+    if (drones.length < 30) {
+      setDrones([...drones, { id: nextDroneId, batteryCapacity: STANDARD_BATTERY_CAPACITY }]);
+      setNextDroneId(nextDroneId + 1);
+    }
+  };
+
+  const handleRemoveDrone = (id: number) => {
+    if (drones.length > 1) {
+      setDrones(drones.filter(drone => drone.id !== id));
+    }
+  };
+
+  const handleUpdateCapacity = (id: number, capacity: number) => {
+    setDrones(drones.map(drone =>
+      drone.id === id ? { ...drone, batteryCapacity: capacity } : drone
+    ));
+  };
+
   const refreshDisplay = async () => {
     setIsLoading(true);
     setError(null);
     setMessage(null);
 
     try {
+      // Prepare fleet configuration
+      const fleetCapacities = drones.map(drone => drone.batteryCapacity);
+
       const response = await fetch(`${apiUrl}/api/run-pipeline`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          fleet_capacities: fleetCapacities
+        })
       });
 
       const data = await response.json();
@@ -91,11 +125,18 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
         width: typeof width === 'number' ? `${width}px` : width,
         height: typeof height === 'number' ? `${height}px` : height,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         overflow: 'hidden',
         backgroundColor: '#0f1420'
       }}
     >
+      {/* Main Map Section */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
       {/* Control Panel */}
       <div style={{
         padding: '12px 24px',
@@ -258,6 +299,16 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
           loading="lazy"
         />
       </div>
+      </div>
+
+      {/* Drone Management Panel */}
+      <DronePanel
+        drones={drones}
+        maxCapacity={STANDARD_BATTERY_CAPACITY}
+        onAddDrone={handleAddDrone}
+        onRemoveDrone={handleRemoveDrone}
+        onUpdateCapacity={handleUpdateCapacity}
+      />
     </div>
   );
 };

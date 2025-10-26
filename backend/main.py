@@ -34,6 +34,20 @@ def run_pipeline():
 
             print(f"Using default fleet configuration: {num_drones} drones")
 
+        # --- Define the Solver Strategy ---
+        # This string must match one of the options in routing.py
+
+        # A good, fast, high-quality default.
+        solver_strategy = "FAST_QUALITY" 
+
+        # Your original strategy
+        # solver_strategy = "DEFAULT" 
+
+        # A strategy for getting the absolute best score, given more time
+        # solver_strategy = "BEST_QUALITY" 
+        #
+        # --- End of Strategy Definition ---
+
         print(f"Solving for a fleet of {len(fleet_capacities)} drones.")
         print(f"Capacities: {fleet_capacities}")
 
@@ -41,7 +55,7 @@ def run_pipeline():
         # 'missions' is a list of lists, where each sublist
         # is the sequence of *stops* (waypoint indices)
         print("Calling solve_missions with vehicle_capacities:", fleet_capacities)
-        missions = solve_missions(data, vehicle_capacities=fleet_capacities)
+        missions = solve_missions(data, vehicle_capacities=fleet_capacities, strategy_name=solver_strategy)
         
         if not missions:
             print("Could not find a valid solution.")

@@ -25,10 +25,36 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [mapKey, setMapKey] = useState(Date.now());
+  const [progress, setProgress] = useState(0);
+
+  const SEARCH_TIME_LIMIT_SECONDS = 30; // Must match backend routing.py
 
   useEffect(() => {
     // Any additional initialization logic can go here
   }, []);
+
+  // Progress bar animation when loading
+  useEffect(() => {
+    if (isLoading) {
+      setProgress(0);
+      const startTime = Date.now();
+      const duration = SEARCH_TIME_LIMIT_SECONDS * 1000; // Convert to milliseconds
+
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const newProgress = Math.min((elapsed / duration) * 100, 100);
+        setProgress(newProgress);
+
+        if (newProgress >= 100) {
+          clearInterval(interval);
+        }
+      }, 50); // Update every 50ms for smooth animation
+
+      return () => clearInterval(interval);
+    } else {
+      setProgress(0);
+    }
+  }, [isLoading]);
 
   const refreshDisplay = async () => {
     setIsLoading(true);
@@ -168,6 +194,42 @@ const DroneMissionsMap: React.FC<DroneMissionsMapProps> = ({
               alignItems: 'center'
             }}>✗</span>
             {error}
+          </div>
+        )}
+
+        {/* Progress Indicator */}
+        {isLoading && (
+          <div style={{
+            flex: 1,
+            minWidth: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <div style={{
+              flex: 1,
+              height: '8px',
+              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              border: '1px solid rgba(99, 102, 241, 0.3)'
+            }}>
+              <div style={{
+                width: `${progress}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                transition: 'width 0.05s linear',
+                boxShadow: '0 0 10px rgba(99, 102, 241, 0.5)'
+              }} />
+            </div>
+            <span style={{
+              fontSize: '13px',
+              color: '#94a3b8',
+              fontWeight: '500',
+              minWidth: '45px'
+            }}>
+              {Math.round(progress)}%
+            </span>
           </div>
         )}
       </div>

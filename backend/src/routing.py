@@ -6,7 +6,9 @@ from src import config
 # Time limit in seconds for the solver
 SEARCH_TIME_LIMIT_SECONDS = 30
 
-def create_solver_data_model(data: dict) -> dict:
+print("src/routing.py loaded")
+
+def create_solver_data_model(data: dict, vehicle_capacities: list[int]) -> dict:
     """Prepares data for the OR-Tools solver."""
     
     # Ensure all indices are within bounds
@@ -30,16 +32,40 @@ def create_solver_data_model(data: dict) -> dict:
     return {
         'solver_dist_matrix': solver_dist_matrix,
         'solver_to_waypoint': solver_to_waypoint,
-        'num_vehicles': config.NUM_VEHICLES,
+        'num_vehicles': len(vehicle_capacities),
+        'vehicle_capacities': vehicle_capacities,
         'depot': 0 # The depot is ALWAYS index 0 for the solver
     }
 
-def solve_missions(data: dict) -> list[list[int]]:
+def validate_input_data(data: dict, vehicle_capacities: list[int]) -> bool:
+    """Validates the input data for the solver."""
+    if not isinstance(vehicle_capacities, list) or not all(isinstance(cap, int) and cap > 0 for cap in vehicle_capacities):
+        print("Error: vehicle_capacities must be a list of positive integers.")
+        return False
+
+    if 'distance_matrix' not in data or not isinstance(data['distance_matrix'], np.ndarray):
+        print("Error: distance_matrix must be a NumPy array.")
+        return False
+
+    if 'required_waypoints' not in data or not isinstance(data['required_waypoints'], list):
+        print("Error: required_waypoints must be a list.")
+        return False
+
+    print("Input data validation passed.")
+    return True
+
+def solve_missions(data: dict, vehicle_capacities: list[int]) -> list[list[int]]:
+    #print("solve_missions function called with vehicle_capacities:", vehicle_capacities) #DEBUG
+
+    # Validate input data
+    if not validate_input_data(data, vehicle_capacities):
+        return []
+
     """
     Solves the CVRP and returns a list of missions.
     Each mission is a list of *original waypoint indices*.
     """
-    model = create_solver_data_model(data)
+    model = create_solver_data_model(data, vehicle_capacities=vehicle_capacities)
     manager = pywrapcp.RoutingIndexManager(
         len(model['solver_dist_matrix']),
         model['num_vehicles'],
@@ -57,10 +83,10 @@ def solve_missions(data: dict) -> list[list[int]]:
     routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
 
     # 2. Add the battery distance constraint
-    routing.AddDimension(
+    routing.AddDimensionWithVehicleCapacity(
         transit_callback_index,
         0,  # no slack
-        config.MAX_MISSION_DISTANCE_FEET,
+        model['vehicle_capacities'],
         True,  # Start cumulative distance at zero
         'Distance'
     )
@@ -84,7 +110,7 @@ def solve_missions(data: dict) -> list[list[int]]:
     # Enable parallel search
     search_parameters.use_multi_armed_bandit_concatenate_operators = True
     # Get multiple solutions (useful for solution pool)
-    search_parameters.solution_limit = 100
+    search_parameters.solution_limit = 100 #100 #300
     # Log search progress (useful for debugging)
     search_parameters.log_search = True
     search_parameters.time_limit.seconds = SEARCH_TIME_LIMIT_SECONDS

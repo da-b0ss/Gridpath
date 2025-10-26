@@ -18,9 +18,7 @@ POLYGON_WKT_FILE = DATA_PATH / "polygon_lon_lat.wkt"
 
 # --- Routing Parameters ---
 DEPOT_INDEX = 0
-MAX_MISSION_DISTANCE_FEET = 37725
-# High number so the solver can use as many as needed
-NUM_VEHICLES = 30 
+STANDARD_BATTERY_CAPACITY = 37725
 
 # --- Visualization ---
 OUTPUT_MAP_FILE = PROJECT_ROOT / ".." / "frontend" / "public" / "drone_missions_map.html"

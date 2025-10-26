@@ -1,16 +1,91 @@
+# ===========================
+# Python
+# ===========================
 # Virtual Environment
 venv/
+env/
 *.venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables
 .env
+.env.local
+.env.*.local
 
 # Python cache
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
-# IDE / OS files
+# ===========================
+# Node.js / React / Vite
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+.next/
+out/
+
+# Vite
+.vite/
+*.local
+
+# ===========================
+# Generated Files
+# ===========================
+# Generated map visualizations (5MB+ files)
+drone_missions_map.html
+**/drone_missions_map.html
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# ===========================
+# IDE / Editor / OS files
+# ===========================
 .vscode/
 .idea/
-*.DS_Store
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+Desktop.ini
 
-.node_modules/
+# ===========================
+# Temporary & Test files
+# ===========================
+*.tmp
+*.temp
+*.bak
+*.cache
+.cache/
+coverage/

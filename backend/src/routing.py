@@ -4,6 +4,8 @@ from ortools.constraint_solver import pywrapcp
 from src import config
 import random
 
+SEARCH_TIME_LIMIT_SECONDS = 60
+
 def create_solver_data_model(data: dict, vehicle_capacities: list[int]) -> dict:
     """Prepares data for the OR-Tools solver."""
     
@@ -140,7 +142,7 @@ def ga_build_seed(num_nodes, num_vehicles, eval_distance,
     best_perm, (best_routes, best_score) = min(scored, key=lambda x: x[1][1])
     return best_routes
 
-def run_alns_seed(routing, manager, time_seconds=20, first_sol="PATH_MOST_CONSTRAINED_ARC", ls="GLS"):
+def run_alns_seed(routing, manager, time_seconds=SEARCH_TIME_LIMIT_SECONDS, first_sol="PATH_MOST_CONSTRAINED_ARC", ls="GLS"):
 
     params = pywrapcp.DefaultRoutingSearchParameters()
     # solid constructive start so LNS has structure
@@ -153,7 +155,7 @@ def run_alns_seed(routing, manager, time_seconds=20, first_sol="PATH_MOST_CONSTR
     seed_solution = routing.SolveWithParameters(params)
     return seed_solution
 
-def improve_from_routes(routing, routes, time_seconds=40, ls="GLS"):
+def improve_from_routes(routing, routes, time_seconds=SEARCH_TIME_LIMIT_SECONDS, ls="GLS"):
     params = pywrapcp.DefaultRoutingSearchParameters()
     set_metaheuristic(params, ls)
     params.use_multi_armed_bandit_concatenate_operators = True
@@ -246,7 +248,7 @@ def solve_missions(data: dict, vehicle_capacities: list[int], strategy_name: str
     params_seed.solution_limit = 100
     params_seed.log_search = True
     # Give the seed a smaller slice of time
-    params_seed.time_limit.seconds = 10
+    params_seed.time_limit.seconds = 20
 
     print("Stage A: ALNS seeding…")
     seed_solution = routing.SolveWithParameters(params_seed)
@@ -263,7 +265,7 @@ def solve_missions(data: dict, vehicle_capacities: list[int], strategy_name: str
         params_refine.solution_limit = 100
         params_refine.log_search = True
         # Spend the rest of the budget polishing
-        params_refine.time_limit.seconds = 40
+        params_refine.time_limit.seconds = 60
 
         print("Stage B: Memetic refinement (improve from ALNS seed)…")
         solution = routing.SolveFromAssignmentWithParameters(seed_solution, params_refine)

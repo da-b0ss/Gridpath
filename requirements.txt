@@ -1,6 +1,6 @@
 numpy
-google-or-tools
 scipy
 shapely
 plotly
 ortools
+matplotlib

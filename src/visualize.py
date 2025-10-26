@@ -7,6 +7,34 @@ def plot_solution(missions: list[list[int]], data: dict):
     Generates an interactive HTML map of the solved missions.
     """
     print("Generating visualization...")
+    # print(missions)    
+    # === COVERAGE VERIFICATION ===
+    required_waypoints = set(data['required_waypoints'])
+    visited_waypoints = set()
+    
+    # Collect all visited waypoints from missions
+    for mission in missions:
+        print(mission)
+        for waypoint in mission:
+            if waypoint in required_waypoints:
+                visited_waypoints.add(waypoint)
+
+    
+    # Calculate coverage statistics
+    coverage_percentage = (len(visited_waypoints) / len(required_waypoints)) * 100
+    # print(required_waypoints)
+    # print("VISITED WAYPOINTS", len(visited_waypoints))
+    missing_waypoints = required_waypoints - visited_waypoints
+    
+    print(f"Coverage Analysis:")
+    print(f"  Required waypoints: {len(required_waypoints)}")
+    print(f"  Visited waypoints: {len(visited_waypoints)}")
+    print(f"  Coverage: {coverage_percentage:.1f}%")
+    if missing_waypoints:
+        print(f"  Missing waypoints: {len(missing_waypoints)}")
+        print(f"  Missing indices: {sorted(list(missing_waypoints))[:10]}...")  # Show first 10
+    
+    # === CONTINUE WITH EXISTING CODE ===
     fig = go.Figure()
     all_coords = data['points_lat_long']
     predecessors = data['predecessors']
@@ -61,10 +89,28 @@ def plot_solution(missions: list[list[int]], data: dict):
         name="Drone Missions"
     ))
 
-    # 3. Configure layout and save
+    # 3. Add missing waypoints as red dots (if any)
+    # VERIFY
+    if missing_waypoints:
+        missing_coords = all_coords[list(missing_waypoints)]
+        fig.add_trace(go.Scattermapbox(
+            mode="markers",
+            lon=missing_coords[:, 0],
+            lat=missing_coords[:, 1],
+            marker=dict(size=8, color="red"),
+            name=f"Missing Waypoints ({len(missing_waypoints)})"
+        ))
+
+    # 4. Configure layout and save
     center_lon, center_lat = data['polygon'].centroid.xy
+    
+    # Add coverage info to title
+    title = f"NextEra Drone Mission Plan - Coverage: {coverage_percentage:.1f}%"
+    if missing_waypoints:
+        title += f" (Missing: {len(missing_waypoints)})"
+    
     fig.update_layout(
-        title="NextEra Drone Mission Plan",
+        title=title,
         mapbox_style=config.MAPBOX_STYLE,
         mapbox_center_lon=center_lon[0],
         mapbox_center_lat=center_lat[0],
@@ -74,3 +120,12 @@ def plot_solution(missions: list[list[int]], data: dict):
     
     fig.write_html(config.OUTPUT_MAP_FILE)
     print(f"Success! Map saved to {config.OUTPUT_MAP_FILE}")
+    
+    # Return coverage statistics for further analysis
+    return {
+        'coverage_percentage': coverage_percentage,
+        'total_required': len(required_waypoints),
+        'total_visited': len(visited_waypoints),
+        'missing_waypoints': list(missing_waypoints),
+        'full_coverage': len(missing_waypoints) == 0
+    }

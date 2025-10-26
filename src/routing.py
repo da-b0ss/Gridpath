@@ -66,12 +66,18 @@ def solve_missions(data: dict) -> list[list[int]]:
     # 3. Set search parameters and solve
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
     )
     search_parameters.local_search_metaheuristic = (
-        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
     )
-    search_parameters.time_limit.seconds = 30 # Add a 30s time limit
+    # Enable parallel search
+    search_parameters.use_multi_armed_bandit_concatenate_operators = True
+    # Get multiple solutions (useful for solution pool)
+    search_parameters.solution_limit = 100
+    # Log search progress (useful for debugging)
+    search_parameters.log_search = True
+    search_parameters.time_limit.seconds = 300 # Add a 30s time limit
 
     print("Solving... (This may take up to 30 seconds)")
     solution = routing.SolveWithParameters(search_parameters)

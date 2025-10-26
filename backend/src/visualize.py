@@ -153,26 +153,135 @@ def plot_solution(missions: list[list[int]], data: dict):
         title += f" (Missing: {len(missing_waypoints)})"
     
     fig.update_layout(
-        title=title,
+        title={
+            'text': title,
+            'font': {'size': 20, 'color': '#e2e8f0', 'family': 'Arial, sans-serif'}
+        },
         mapbox_style=config.MAPBOX_STYLE,
         mapbox_center_lon=center_lon[0],
         mapbox_center_lat=center_lat[0],
         mapbox_zoom=10,
         margin={"r":0,"t":40,"l":0,"b":0},
+        paper_bgcolor='#0a0e1a',  # Dark background
+        plot_bgcolor='#0a0e1a',
+        font={'color': '#e2e8f0'},  # Light text color
+        legend={
+            'bgcolor': 'rgba(15, 20, 32, 0.8)',
+            'bordercolor': 'rgba(99, 102, 241, 0.3)',
+            'borderwidth': 1,
+            'font': {'color': '#e2e8f0'},
+            'x': 0.01,  # Position on left side
+            'y': 0.99,  # Position at top
+            'xanchor': 'left',
+            'yanchor': 'top'
+        },
+        dragmode='pan',  # Enable pan/drag mode (scroll wheel will handle zoom)
+        hovermode='closest'
     )
-    
-    fig.write_html(config.OUTPUT_MAP_FILE)
-    print(f"Success! Map saved to {config.OUTPUT_MAP_FILE}")
-    
-    # Return coverage statistics for further analysis
-    return {
-        'coverage_percentage': coverage_percentage,
-        'total_required': len(required_waypoints),
-        'total_visited': len(visited_waypoints),
-        'missing_waypoints': list(missing_waypoints),
-        'full_coverage': len(missing_waypoints) == 0
+
+    # Configure plot for better interactivity
+    plot_config = {
+        'scrollZoom': True,  # Enable mouse wheel zoom
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['lasso2d', 'select2d']
     }
-    
+
+    # Write the HTML with custom animation script
+    html_string = fig.to_html(config=plot_config, include_plotlyjs='cdn')
+
+    # Add custom JavaScript for path animation
+    animation_script = """
+    <script>
+    (function() {
+        // Wait for Plotly to be ready
+        function animatePaths() {
+            const gd = document.querySelector('.plotly-graph-div');
+            if (!gd || !gd.data) {
+                setTimeout(animatePaths, 100);
+                return;
+            }
+
+            // Find mission traces (they contain "Mission" in their name)
+            const missionTraces = [];
+            gd.data.forEach((trace, idx) => {
+                if (trace.name && trace.name.startsWith('Mission ')) {
+                    missionTraces.push({
+                        index: idx,
+                        originalLon: [...trace.lon],
+                        originalLat: [...trace.lat],
+                        name: trace.name
+                    });
+                }
+            });
+
+            if (missionTraces.length === 0) return;
+
+            // Initially hide all mission paths
+            const update = {};
+            missionTraces.forEach(mission => {
+                update[`lon[${mission.index}]`] = [[]];
+                update[`lat[${mission.index}]`] = [[]];
+            });
+            Plotly.restyle(gd, update);
+
+            // Animate each mission sequentially
+            let currentMission = 0;
+            const animationDuration = 2000; // 2 seconds per mission
+            const fps = 60;
+            const frameInterval = 1000 / fps;
+
+            function animateMission() {
+                if (currentMission >= missionTraces.length) return;
+
+                const mission = missionTraces[currentMission];
+                const totalPoints = mission.originalLon.length;
+                let currentPoint = 0;
+                const pointsPerFrame = Math.max(1, Math.floor(totalPoints / (animationDuration / frameInterval)));
+
+                const interval = setInterval(() => {
+                    currentPoint = Math.min(currentPoint + pointsPerFrame, totalPoints);
+
+                    const partialLon = mission.originalLon.slice(0, currentPoint);
+                    const partialLat = mission.originalLat.slice(0, currentPoint);
+
+                    Plotly.restyle(gd, {
+                        lon: [partialLon],
+                        lat: [partialLat]
+                    }, [mission.index]);
+
+                    if (currentPoint >= totalPoints) {
+                        clearInterval(interval);
+                        currentMission++;
+                        // Small delay before next mission
+                        setTimeout(animateMission, 200);
+                    }
+                }, frameInterval);
+            }
+
+            // Start animation after a short delay
+            setTimeout(animateMission, 500);
+        }
+
+        // Start animation when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', animatePaths);
+        } else {
+            animatePaths();
+        }
+    })();
+    </script>
+    """
+
+    # Insert the animation script before the closing body tag
+    html_string = html_string.replace('</body>', animation_script + '</body>')
+
+    # Write the modified HTML
+    with open(config.OUTPUT_MAP_FILE, 'w') as f:
+        f.write(html_string)
+
+    print(f"Success! Map saved to {config.OUTPUT_MAP_FILE}")
+
     # Return coverage statistics for further analysis
     return {
         'coverage_percentage': coverage_percentage,

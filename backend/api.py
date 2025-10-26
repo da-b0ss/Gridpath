@@ -5,13 +5,15 @@ Simple Flask API to run the drone challenge pipeline and serve the generated map
 import os
 import sys
 import subprocess
-from flask import Flask, jsonify, send_from_directory
+import json
+from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 
 # Add the backend directory to the path so we can import from src
 sys.path.insert(0, os.path.dirname(__file__))
 
 from src.routing import SEARCH_TIME_LIMIT_SECONDS
+from src import config
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -19,6 +21,7 @@ CORS(app)  # Enable CORS for React frontend
 # Path to the main.py script
 MAIN_PY_PATH = os.path.join(os.path.dirname(__file__), 'main.py')
 FRONTEND_PUBLIC_PATH = os.path.join(os.path.dirname(__file__), '../frontend/public')
+FLEET_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'data', 'fleet_config.json')
 
 # API timeout = routing timeout + 30 second buffer
 API_TIMEOUT = SEARCH_TIME_LIMIT_SECONDS + 30
@@ -27,6 +30,7 @@ API_TIMEOUT = SEARCH_TIME_LIMIT_SECONDS + 30
 def run_pipeline():
     """
     Execute main.py to regenerate the drone missions map.
+    Accepts fleet configuration from the frontend.
     """
     print(f"\n{'='*60}")
     print(f"Starting pipeline execution...")
@@ -34,6 +38,40 @@ def run_pipeline():
     print(f"{'='*60}\n")
 
     try:
+        # Get fleet configuration from request
+        request_data = request.get_json() or {}
+        fleet_capacities = request_data.get('fleet_capacities', None)
+
+        # Validate fleet configuration
+        if fleet_capacities:
+            # Ensure it's a list of numbers
+            if not isinstance(fleet_capacities, list) or len(fleet_capacities) < 1 or len(fleet_capacities) > 30:
+                return jsonify({
+                    'success': False,
+                    'message': 'Fleet must have between 1 and 30 drones'
+                }), 400
+
+            # Validate each capacity
+            for capacity in fleet_capacities:
+                if not isinstance(capacity, (int, float)) or capacity < 0 or capacity > config.STANDARD_BATTERY_CAPACITY:
+                    return jsonify({
+                        'success': False,
+                        'message': f'Each drone capacity must be between 0 and {config.STANDARD_BATTERY_CAPACITY}'
+                    }), 400
+
+            # Save fleet configuration to JSON file
+            os.makedirs(os.path.dirname(FLEET_CONFIG_PATH), exist_ok=True)
+            with open(FLEET_CONFIG_PATH, 'w') as f:
+                json.dump({'fleet_capacities': fleet_capacities}, f)
+
+            print(f"Fleet configuration saved: {len(fleet_capacities)} drones")
+            print(f"Capacities: {fleet_capacities}")
+        else:
+            # Remove existing config file if no fleet specified
+            if os.path.exists(FLEET_CONFIG_PATH):
+                os.remove(FLEET_CONFIG_PATH)
+            print("Using default fleet configuration")
+
         # Run main.py as a subprocess
         import time
         start_time = time.time()

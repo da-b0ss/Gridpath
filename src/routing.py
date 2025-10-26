@@ -66,7 +66,7 @@ def solve_missions(data: dict) -> list[list[int]]:
     # 3. Set search parameters and solve
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
     )
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC

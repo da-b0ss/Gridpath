@@ -88,4 +88,4 @@ Desktop.ini
 *.bak
 *.cache
 .cache/
-coverage/
+coverage/frontend/public/drone_missions_map.html

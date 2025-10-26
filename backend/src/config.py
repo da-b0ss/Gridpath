@@ -23,5 +23,5 @@ MAX_MISSION_DISTANCE_FEET = 37725
 NUM_VEHICLES = 30 
 
 # --- Visualization ---
-OUTPUT_MAP_FILE = PROJECT_ROOT / "drone_missions_map.html"
+OUTPUT_MAP_FILE = PROJECT_ROOT / ".." / "frontend" / "public" / "drone_missions_map.html"
 MAPBOX_STYLE = "open-street-map"

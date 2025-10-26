@@ -3,6 +3,9 @@ from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 from src import config
 
+# Time limit in seconds for the solver
+SEARCH_TIME_LIMIT_SECONDS = 30
+
 def create_solver_data_model(data: dict) -> dict:
     """Prepares data for the OR-Tools solver."""
     
@@ -77,9 +80,9 @@ def solve_missions(data: dict) -> list[list[int]]:
     search_parameters.solution_limit = 100
     # Log search progress (useful for debugging)
     search_parameters.log_search = True
-    search_parameters.time_limit.seconds = 60 # Add a 30s time limit
+    search_parameters.time_limit.seconds = SEARCH_TIME_LIMIT_SECONDS
 
-    print("Solving... (This may take up to 30 seconds)")
+    print(f"Solving... (This may take up to {SEARCH_TIME_LIMIT_SECONDS} seconds)")
     solution = routing.SolveWithParameters(search_parameters)
     
     if not solution:

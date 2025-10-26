@@ -1,6 +1,0 @@
-numpy
-scipy
-shapely
-plotly
-ortools
-matplotlib

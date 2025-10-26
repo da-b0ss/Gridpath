@@ -54,8 +54,8 @@ def validate_input_data(data: dict, vehicle_capacities: list[int]) -> bool:
     print("Input data validation passed.")
     return True
 
-def solve_missions(data: dict, vehicle_capacities: list[int]) -> list[list[int]]:
-    #print("solve_missions function called with vehicle_capacities:", vehicle_capacities) #DEBUG
+def solve_missions(data: dict, vehicle_capacities: list[int], strategy_name: str = "DEFAULT") -> list[list[int]]:
+    print("solve_missions function called with vehicle_capacities:", vehicle_capacities)
 
     # Validate input data
     if not validate_input_data(data, vehicle_capacities):
@@ -95,29 +95,52 @@ def solve_missions(data: dict, vehicle_capacities: list[int]) -> list[list[int]]
     # 3. Set search parameters and solve
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
 
-    # Current strategy: Advanced search with multiple optimizations
-    # Alternative simpler strategy (from test folder):
-    #   - first_solution_strategy = PATH_CHEAPEST_ARC (faster initial solution)
-    #   - local_search_metaheuristic = GUIDED_LOCAL_SEARCH (more focused)
-    #   - No parallel search, solution limit, or logging (simpler/faster)
+    # --- Strategy Selection Logic ---
+    # Select the core algorithm based on the strategy_name
+    print(f"Using solver strategy: {strategy_name}")
 
-    search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
-    )
-    search_parameters.local_search_metaheuristic = (
-        routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
-    )
-    # Enable parallel search
+    if strategy_name == "FAST_QUALITY":
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        )
+        search_parameters.local_search_metaheuristic = (
+            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        )
+
+    elif strategy_name == "BEST_QUALITY":
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC
+        )
+        search_parameters.local_search_metaheuristic = (
+            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        )
+
+    elif strategy_name == "EXPERIMENTAL_SA":
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+        )
+        search_parameters.local_search_metaheuristic = (
+            routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING
+        )
+
+    else: # "DEFAULT" or any other string
+        print("Using DEFAULT strategy.")
+        search_parameters.first_solution_strategy = (
+            routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
+        )
+        search_parameters.local_search_metaheuristic = (
+            routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
+        )
+    # --- End of Strategy Selection Logic ---
+
     search_parameters.use_multi_armed_bandit_concatenate_operators = True
-    # Get multiple solutions (useful for solution pool)
-    search_parameters.solution_limit = 100 #100 #300
-    # Log search progress (useful for debugging)
+    search_parameters.solution_limit = 100
     search_parameters.log_search = True
     search_parameters.time_limit.seconds = SEARCH_TIME_LIMIT_SECONDS
 
     print(f"Solving... (This may take up to {SEARCH_TIME_LIMIT_SECONDS} seconds)")
     solution = routing.SolveWithParameters(search_parameters)
-    
+
     if not solution:
         print("No solution found!")
         return []
@@ -129,19 +152,19 @@ def solve_missions(data: dict, vehicle_capacities: list[int]) -> list[list[int]]
         index = routing.Start(vehicle_id)
         route = []
         route_distance = 0
-        
+
         while not routing.IsEnd(index):
             node_index = manager.IndexToNode(index)
             route.append(model['solver_to_waypoint'][node_index])
-            
+
             previous_index = index
             index = solution.Value(routing.NextVar(index))
             route_distance += routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
-        
+
         # Add the depot at the end
         node_index = manager.IndexToNode(index)
         route.append(model['solver_to_waypoint'][node_index])
-        
+
         if len(route) > 2: # It's not an empty route
             missions.append(route)
             total_distance += route_distance

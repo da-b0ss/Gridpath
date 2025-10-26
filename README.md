@@ -2,12 +2,21 @@
 
 ## Project Setup
 
-Follow these steps to set up and run the project:
+This project consists of a Python backend API and a React frontend. Follow the steps below to set up and run both.
 
-### 1. Clone the Repository
+### Prerequisites
+
+- Python 3.8+
+- Node.js 16+ and npm
+- Git
+
+---
+
+## Backend Setup
+
+### 1. Navigate to the Backend Directory
 ```bash
-git clone https://github.com/da-b0ss/The-Seeker 
-cd The-Seeker
+cd backend
 ```
 
 ### 2. Set Up the Virtual Environment
@@ -16,13 +25,76 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+### 3. Install Backend Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Run the Pipeline
+### 4. Run the Backend Server
 ```bash
+python main.py
+```
+
+The backend API will start running and serve requests from the frontend.
+
+---
+
+## Frontend Setup
+
+### 1. Navigate to the Frontend Directory
+```bash
+cd frontend
+```
+
+### 2. Install Frontend Dependencies
+```bash
+npm install
+```
+
+### 3. Run the Frontend Development Server
+```bash
+npm start
+```
+
+or
+
+```bash
+npm run dev
+```
+
+The frontend will open in your browser, typically at `http://localhost:5173` (Vite default).
+
+---
+
+## Complete Setup (From Project Root)
+
+If you want to set up both backend and frontend from the root directory:
+
+```bash
+# Backend setup
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# In one terminal, run the backend
+python main.py
+
+# In another terminal, set up and run the frontend
+cd ../frontend
+npm install
+npm start
+```
+
+---
+
+## Running the Pipeline
+
+To run the complete pipeline (data loading, routing, and visualization):
+
+```bash
+cd backend
+source venv/bin/activate
 python main.py
 ```
 
@@ -31,14 +103,13 @@ This will:
 - Solve the routing problem.
 - Generate the `drone_missions_map.html` file in the project root.
 
-### 5. View the Output
-Open `drone_missions_map.html` in your browser to view the interactive map of drone missions.
+You can then open `drone_missions_map.html` in your browser to view the interactive map of drone missions.
 
 ---
 
 ## Project Structure
 
-```
+```text
 .
 ├── data/
 │   ├── asset_indexes.npy
@@ -63,6 +134,7 @@ Open `drone_missions_map.html` in your browser to view the interactive map of dr
 ```
 
 ### Key Files
+
 - **`data/`**: Contains input data files.
 - **`src/`**: Contains modular Python scripts for the pipeline.
 - **`main.py`**: Entry point for the pipeline.
@@ -75,6 +147,7 @@ Open `drone_missions_map.html` in your browser to view the interactive map of dr
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Virtual Environment Not Activated**:
    - Ensure you see `(venv)` in your terminal prompt.
    - Run `source venv/bin/activate` to activate the virtual environment.
@@ -86,6 +159,7 @@ Open `drone_missions_map.html` in your browser to view the interactive map of dr
    - Ensure all `.npy` and `.wkt` files are in the `data/` directory.
 
 ### Getting Help
+
 Refer to the official documentation for tools used in this project:
 - [Google OR-Tools Routing](https://developers.google.com/optimization/routing)
 - [SciPy Dijkstra](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csgraph.dijkstra.html)

@@ -68,6 +68,13 @@ def solve_missions(data: dict) -> list[list[int]]:
 
     # 3. Set search parameters and solve
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+
+    # Current strategy: Advanced search with multiple optimizations
+    # Alternative simpler strategy (from test folder):
+    #   - first_solution_strategy = PATH_CHEAPEST_ARC (faster initial solution)
+    #   - local_search_metaheuristic = GUIDED_LOCAL_SEARCH (more focused)
+    #   - No parallel search, solution limit, or logging (simpler/faster)
+
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
     )

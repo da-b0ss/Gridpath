@@ -4,7 +4,7 @@ from ortools.constraint_solver import pywrapcp
 from src import config
 
 # Time limit in seconds for the solver
-SEARCH_TIME_LIMIT_SECONDS = 30
+SEARCH_TIME_LIMIT_SECONDS = 90
 
 print("src/routing.py loaded")
 
@@ -94,44 +94,12 @@ def solve_missions(data: dict, vehicle_capacities: list[int], strategy_name: str
 
     # 3. Set search parameters and solve
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-
-    # --- Strategy Selection Logic ---
-    # Select the core algorithm based on the strategy_name
-    print(f"Using solver strategy: {strategy_name}")
-
-    if strategy_name == "FAST_QUALITY":
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
         )
-        search_parameters.local_search_metaheuristic = (
-            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-        )
-
-    elif strategy_name == "BEST_QUALITY":
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC
-        )
-        search_parameters.local_search_metaheuristic = (
-            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
-        )
-
-    elif strategy_name == "EXPERIMENTAL_SA":
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC
-        )
-        search_parameters.local_search_metaheuristic = (
-            routing_enums_pb2.LocalSearchMetaheuristic.SIMULATED_ANNEALING
-        )
-
-    else: # "DEFAULT" or any other string
-        print("Using DEFAULT strategy.")
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PATH_MOST_CONSTRAINED_ARC
-        )
-        search_parameters.local_search_metaheuristic = (
+    search_parameters.local_search_metaheuristic = (
             routing_enums_pb2.LocalSearchMetaheuristic.AUTOMATIC
         )
-    # --- End of Strategy Selection Logic ---
 
     search_parameters.use_multi_armed_bandit_concatenate_operators = True
     search_parameters.solution_limit = 100

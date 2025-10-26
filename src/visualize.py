@@ -13,6 +13,7 @@ def plot_solution(missions: list[list[int]], data: dict):
     visited_waypoints = set()
     
     # Collect all visited waypoints from missions
+    print("MISSION DATA", len(missions))
     for mission in missions:
         for waypoint in mission:
             if waypoint in required_waypoints:
@@ -85,9 +86,12 @@ def plot_solution(missions: list[list[int]], data: dict):
             hovertemplate="<b>%{text}</b><br>Lon: %{lon:.6f}<br>Lat: %{lat:.6f}<extra></extra>"
         ))
 
-    # 4. Add each mission as a full, detailed path
-    all_mission_lons = []
-    all_mission_lats = []
+    # 4. Add each mission as a full, detailed path with different colors
+    mission_colors = [
+        'blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 
+        'olive', 'cyan', 'magenta', 'lime', 'indigo', 'violet', 'gold',
+        'darkblue', 'darkred', 'darkgreen', 'darkorange', 'darkviolet'
+    ]
     
     for i, mission_stops in enumerate(missions):
         # Reconstruct the full path for each leg
@@ -108,20 +112,19 @@ def plot_solution(missions: list[list[int]], data: dict):
         valid_indices = [idx for idx in full_mission_path_indices if idx < len(all_coords)]
         coords = all_coords[valid_indices]
         
-        all_mission_lons.extend(coords[:, 0]) # lon is index 0
-        all_mission_lats.extend(coords[:, 1]) # lat is index 1
+        # Get color for this mission (cycle through colors if more missions than colors)
+        mission_color = mission_colors[i % len(mission_colors)]
         
-        # Add a 'None' to break the line between missions
-        all_mission_lons.append(None)
-        all_mission_lats.append(None)
-
-    fig.add_trace(go.Scattermapbox(
-        mode="lines",
-        lon=all_mission_lons,
-        lat=all_mission_lats,
-        line=dict(color="blue", width=2),
-        name="Drone Missions"
-    ))
+        # Add this mission as a separate trace
+        fig.add_trace(go.Scattermapbox(
+            mode="lines",
+            lon=coords[:, 0],
+            lat=coords[:, 1],
+            line=dict(color=mission_color, width=3),
+            name=f"Mission {i+1}",
+            hovertemplate=f"<b>Mission {i+1}</b><br>Step: %{{pointIndex}}<br>Lon: %{{lon}}<br>Lat: %{{lat}}<extra></extra>",
+            showlegend=True
+        ))
 
     # 5. Add depot (start/end point)
     depot_coords = all_coords[config.DEPOT_INDEX]
@@ -143,6 +146,12 @@ def plot_solution(missions: list[list[int]], data: dict):
     if missing_waypoints:
         title += f" (Missing: {len(missing_waypoints)})"
     
+    
+    # Add coverage info to title
+    title = f"NextEra Drone Mission Plan - Coverage: {coverage_percentage:.1f}%"
+    if missing_waypoints:
+        title += f" (Missing: {len(missing_waypoints)})"
+    
     fig.update_layout(
         title=title,
         mapbox_style=config.MAPBOX_STYLE,
@@ -154,6 +163,15 @@ def plot_solution(missions: list[list[int]], data: dict):
     
     fig.write_html(config.OUTPUT_MAP_FILE)
     print(f"Success! Map saved to {config.OUTPUT_MAP_FILE}")
+    
+    # Return coverage statistics for further analysis
+    return {
+        'coverage_percentage': coverage_percentage,
+        'total_required': len(required_waypoints),
+        'total_visited': len(visited_waypoints),
+        'missing_waypoints': list(missing_waypoints),
+        'full_coverage': len(missing_waypoints) == 0
+    }
     
     # Return coverage statistics for further analysis
     return {

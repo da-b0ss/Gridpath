@@ -77,7 +77,7 @@ def solve_missions(data: dict) -> list[list[int]]:
     search_parameters.solution_limit = 100
     # Log search progress (useful for debugging)
     search_parameters.log_search = True
-    search_parameters.time_limit.seconds = 300 # Add a 30s time limit
+    search_parameters.time_limit.seconds = 60 # Add a 30s time limit
 
     print("Solving... (This may take up to 30 seconds)")
     solution = routing.SolveWithParameters(search_parameters)

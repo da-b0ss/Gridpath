@@ -146,6 +146,12 @@ def plot_solution(missions: list[list[int]], data: dict):
     if missing_waypoints:
         title += f" (Missing: {len(missing_waypoints)})"
     
+    
+    # Add coverage info to title
+    title = f"NextEra Drone Mission Plan - Coverage: {coverage_percentage:.1f}%"
+    if missing_waypoints:
+        title += f" (Missing: {len(missing_waypoints)})"
+    
     fig.update_layout(
         title=title,
         mapbox_style=config.MAPBOX_STYLE,
@@ -157,6 +163,15 @@ def plot_solution(missions: list[list[int]], data: dict):
     
     fig.write_html(config.OUTPUT_MAP_FILE)
     print(f"Success! Map saved to {config.OUTPUT_MAP_FILE}")
+    
+    # Return coverage statistics for further analysis
+    return {
+        'coverage_percentage': coverage_percentage,
+        'total_required': len(required_waypoints),
+        'total_visited': len(visited_waypoints),
+        'missing_waypoints': list(missing_waypoints),
+        'full_coverage': len(missing_waypoints) == 0
+    }
     
     # Return coverage statistics for further analysis
     return {
